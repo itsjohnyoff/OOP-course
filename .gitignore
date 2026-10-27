@@ -1,0 +1,14 @@
+# Generated Java files
+out/
+out-test/
+*.class
+
+# Personal IntelliJ settings; retain the portable project configuration
+.idea/*
+!.idea/modules.xml
+!.idea/misc.xml
+!.idea/runConfigurations/
+.idea/runConfigurations/*
+!.idea/runConfigurations/Lab_1_Logging_Library.xml
+lab1/.idea/
+IntelliJ IDEA*/

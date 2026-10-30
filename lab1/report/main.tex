@@ -1,0 +1,33 @@
+\documentclass[12pt,a4paper]{article}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{newtxtext,newtxmath}
+\usepackage[a4paper,margin=24mm]{geometry}
+\usepackage{graphicx,xcolor,booktabs,tabularx,array,listings,enumitem,fancyhdr,titlesec,microtype,needspace}
+\usepackage[hidelinks]{hyperref}
+\definecolor{ink}{HTML}{17324D}
+\definecolor{codebg}{HTML}{F3F5F7}
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{6pt}
+\linespread{1.12}
+\emergencystretch=5em
+\setlength{\headheight}{16pt}
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{\small\color{ink}Lab 1: Logging library}
+\fancyhead[R]{\small Zavtoni Ion | FAF-252}
+\fancyfoot[C]{\thepage}
+\renewcommand{\headrulewidth}{0.3pt}
+\titleformat{\section}{\Large\bfseries\color{ink}}{\thesection.}{0.6em}{}
+\titleformat{\subsection}{\large\bfseries\color{ink}}{\thesubsection.}{0.6em}{}
+\titlespacing*{\section}{0pt}{8pt}{10pt}
+\titlespacing*{\subsection}{0pt}{9pt}{5pt}
+\setlist{nosep,leftmargin=1.4em}
+\newcolumntype{Y}{>{\raggedright\arraybackslash}X}
+\renewcommand{\arraystretch}{1.2}
+\newcommand{\code}[1]{\texttt{#1}}
+\lstset{language=Java,basicstyle=\ttfamily\small,keywordstyle=\bfseries\color{ink},commentstyle=\itshape\color{gray},stringstyle=\color{teal!70!black},backgroundcolor=\color{codebg},frame=single,rulecolor=\color{gray!25},breaklines=true,columns=fullflexible,keepspaces=true,showstringspaces=false,tabsize=4,aboveskip=8pt,belowskip=8pt}
+\begin{document}
+\hypersetup{pageanchor=false}
+\input{content.tex}
+\end{document}

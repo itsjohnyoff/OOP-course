@@ -6,15 +6,17 @@ public class Formatter {
     private static final DateTimeFormatter TIME_FORMAT =
             DateTimeFormatter.ofPattern("HH:mm:ss");
 
-    // All formatters start out with a shared template.
-    private static String format = "[%t] [%l] %n: %m";
+    private final String template;
 
-    public static void setFormat(String newFormat) {
-        format = Objects.requireNonNull(newFormat, "Log format cannot be null");
+    public Formatter() {
+        this("[%t] [%l] %n: %m");
+    }
+
+    public Formatter(String template) {
+        this.template = Objects.requireNonNull(template, "Log format cannot be null");
     }
 
     public String format(LogLevel messageLevel, String name, String message) {
-        String template = format;
         String time = LocalTime.now().format(TIME_FORMAT);
         String randomPhrase = null;
 

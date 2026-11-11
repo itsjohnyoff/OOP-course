@@ -1,40 +1,41 @@
 import java.util.Objects;
 
 public class Logger {
-    // each logger keeps its own name
-    private final String name;
-
     // One minimum level applies to all loggers.
     private static LogLevel level = LogLevel.INFO;
-    private final Formatter formatter = new Formatter();
 
-    // store the supplied name; null is not accepted
+    private final String name;
+    private final Formatter formatter;
+    private final ConsoleSink sink;
+
+    // Create a default formatter and sink for this logger.
     public Logger(String name) {
-        this.name = Objects.requireNonNull(name, "Logger name cannot be null");
+        this(name, new Formatter(), new ConsoleSink());
     }
 
-    // setters affect existing and future logger objects
+    // Use the formatter and sink supplied by the caller.
+    public Logger(String name, Formatter formatter, ConsoleSink sink) {
+        this.name = Objects.requireNonNull(name, "Logger name cannot be null");
+        this.formatter = Objects.requireNonNull(formatter, "Formatter cannot be null");
+        this.sink = Objects.requireNonNull(sink, "Sink cannot be null");
+    }
+
     public static void setLevel(LogLevel newLevel) {
         level = Objects.requireNonNull(newLevel, "Log level cannot be null");
-    }
-
-    public static void setFormat(String newFormat) {
-        Formatter.setFormat(newFormat);
     }
 
     public void log(LogLevel messageLevel, String message) {
         Objects.requireNonNull(messageLevel, "Message level cannot be null");
         Objects.requireNonNull(message, "Message cannot be null");
 
-        // hide messages below the minimum level
+        // Check the level before formatting.
         if (!level.allows(messageLevel)) {
             return;
         }
 
-        System.out.println(formatter.format(messageLevel, name, message));
+        sink.write(formatter.format(messageLevel, name, message));
     }
 
-    // these methods supply the message level to log()
     public void trace(String message) {
         log(LogLevel.TRACE, message);
     }

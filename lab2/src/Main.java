@@ -1,18 +1,26 @@
 public class Main {
     public static void main(String[] args) {
-        Formatter formatter = new Formatter();
-        Formatter.setFormat("[%l] %n: %m");
-        System.out.println(formatter.format(LogLevel.INFO, "Parentheses", "Ratio is 100%n"));
-        Formatter.setFormat("%l >> %m");
-        System.out.println(formatter.format(LogLevel.WARN, "Parentheses", "Unmatched closing parenthesis"));
-
         Logger.setLevel(LogLevel.TRACE);
-        Logger.setFormat("[%t] [%l] %n: %m | %r");
 
-        ParenthesesValidator validator = new ParenthesesValidator();
+        Formatter sharedFormat = new Formatter("[%t] [%l] %n: %m | %r");
+        ConsoleSink console = new ConsoleSink();
+
+        // The input and validator logs share a formatter and sink.
+        Logger inputLog = new Logger("Input", sharedFormat, console);
+        Logger validatorLog = new Logger("Parentheses", sharedFormat, console);
+        ParenthesesValidator validator = new ParenthesesValidator(validatorLog);
+
         String[] inputs = {"()", ")((()))", "(", "(())((()())())"};
+        inputLog.info("Checking " + inputs.length + " strings");
+
+        int validCount = 0;
         for (String input : inputs) {
-            validator.isValid(input);
+            if (validator.isValid(input)) {
+                validCount++;
+            }
         }
+
+        Logger summaryLog = new Logger("Summary");
+        summaryLog.info(validCount + " of " + inputs.length + " strings are valid");
     }
 }

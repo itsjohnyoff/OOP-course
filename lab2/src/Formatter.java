@@ -66,4 +66,30 @@ public class Formatter {
 
         return result.toString();
     }
+
+    String expandMessage(String message, Object... values) {
+        Objects.requireNonNull(values, "Message values cannot be null");
+        if (message.indexOf('%') < 0) {
+            return message;
+        }
+
+        StringBuilder result = new StringBuilder();
+        int valueIndex = 0;
+        for (int i = 0; i < message.length(); i++) {
+            char current = message.charAt(i);
+            if (current != '%') {
+                result.append(current);
+            } else if (i + 1 < message.length() && message.charAt(i + 1) == '%') {
+                // Two percent signs stand for one literal percent.
+                result.append('%');
+                i++;
+            } else if (valueIndex < values.length) {
+                result.append(values[valueIndex++]);
+            } else {
+                // Keep a placeholder when there is no value left.
+                result.append('%');
+            }
+        }
+        return result.toString();
+    }
 }

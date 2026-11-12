@@ -24,7 +24,7 @@ public class Logger {
         level = Objects.requireNonNull(newLevel, "Log level cannot be null");
     }
 
-    public void log(LogLevel messageLevel, String message) {
+    public void log(LogLevel messageLevel, String message, Object... values) {
         Objects.requireNonNull(messageLevel, "Message level cannot be null");
         Objects.requireNonNull(message, "Message cannot be null");
 
@@ -33,22 +33,23 @@ public class Logger {
             return;
         }
 
-        sink.write(formatter.format(messageLevel, name, message));
+        String expanded = formatter.expandMessage(message, values);
+        sink.write(formatter.format(messageLevel, name, expanded));
     }
 
-    public void trace(String message) {
-        log(LogLevel.TRACE, message);
+    public void trace(String message, Object... values) {
+        log(LogLevel.TRACE, message, values);
     }
 
-    public void info(String message) {
-        log(LogLevel.INFO, message);
+    public void info(String message, Object... values) {
+        log(LogLevel.INFO, message, values);
     }
 
-    public void warn(String message) {
-        log(LogLevel.WARN, message);
+    public void warn(String message, Object... values) {
+        log(LogLevel.WARN, message, values);
     }
 
-    public void error(String message) {
-        log(LogLevel.ERROR, message);
+    public void error(String message, Object... values) {
+        log(LogLevel.ERROR, message, values);
     }
 }

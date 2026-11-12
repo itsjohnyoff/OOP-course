@@ -28,8 +28,7 @@ public class ParenthesesValidator {
                 balance++;
 
                 logger.trace(
-                        "Opening parenthesis found at index " + i
-                                + "; unmatched openings: " + balance
+                        "Opening parenthesis found at index %; unmatched openings: %", i, balance
                 );
             } else if (current == ')') {
                 // a later opening cannot fix an unmatched closing

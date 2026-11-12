@@ -11,7 +11,7 @@ public class Main {
         ParenthesesValidator validator = new ParenthesesValidator(validatorLog);
 
         String[] inputs = {"()", ")((()))", "(", "(())((()())())"};
-        inputLog.info("Checking " + inputs.length + " strings");
+        inputLog.info("Checking % strings", inputs.length);
 
         int validCount = 0;
         for (String input : inputs) {
@@ -21,6 +21,6 @@ public class Main {
         }
 
         Logger summaryLog = new Logger("Summary");
-        summaryLog.info(validCount + " of " + inputs.length + " strings are valid");
+        summaryLog.info("% of % strings are valid", validCount, inputs.length);
     }
 }

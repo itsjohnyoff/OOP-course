@@ -2,6 +2,7 @@
 out/
 out-test/
 *.class
+lab2/target/
 
 # Personal IntelliJ settings; retain the portable project configuration
 .idea/*

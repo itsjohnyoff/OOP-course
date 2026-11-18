@@ -1,0 +1,112 @@
+% Cover
+\begin{titlepage}
+\centering
+\vspace*{4mm}
+\includegraphics[width=28mm]{images/Im1.png}\par
+\vspace{7mm}
+{\large\bfseries Technical University of Moldova\par}
+{\normalsize Faculty of Computers, Informatics and Microelectronics\par}
+{\normalsize Department of Software Engineering and Automation\par}
+\vspace{28mm}
+{\Large\bfseries Zavtoni Ion\par}
+{\large FAF-252\par}
+\vspace{21mm}
+{\fontsize{38}{44}\selectfont\bfseries Report\par}
+\vspace{4mm}
+{\LARGE\itshape Lab 2: Formatters, Sinks, and the Local AI Agent\par}
+\vspace{3mm}
+{\Large\bfseries Object Oriented Programming\par}
+{\large Programming language: Java\par}
+\vfill
+\begin{flushright}
+Checked by:\\
+\textbf{Dominic Flocea}
+\end{flushright}
+\vspace{25mm}
+{\large Chi\c{s}in\u{a}u -- 2026\par}
+\end{titlepage}
+\setcounter{page}{1}
+\hypersetup{pageanchor=true}
+
+\linespread{1.02}\small
+\setlength{\parskip}{4pt}
+\titlespacing*{\section}{0pt}{7pt}{6pt}
+\lstset{basicstyle=\ttfamily\footnotesize,aboveskip=5pt,belowskip=6pt}
+\textbf{Student} Zavtoni Ion (FAF-252)\quad
+\textbf{Programming language} Java 21\quad
+\textbf{Track} Local AI Agent
+
+\section{The logger, split in three}
+\code{Logger} checks whether the message reaches the minimum level. If it does, \code{Formatter} turns it into one line, and \code{ConsoleSink.write()} prints it. The \code{System.out.println()} that used to be in \code{Logger} now lives in \code{ConsoleSink}. The four parentheses examples still return \code{true}, \code{false}, \code{false}, and \code{true}.
+
+In \code{logger.info("Ratio is 100\%n")}, the \code{\%n} in the message stays as written. The formatter replaces \code{\%n} in the template with the logger name and inserts the message without scanning it again. That keeps the caller's text intact.
+
+\section{Composition and aggregation}
+\begin{lstlisting}
+public Logger(String name) {
+    this(name, new Formatter(), new ConsoleSink());
+}
+
+public Logger(String name, Formatter formatter, ConsoleSink sink) {
+    this.name = Objects.requireNonNull(name, "Logger name cannot be null");
+    this.formatter = Objects.requireNonNull(formatter, "Formatter cannot be null");
+    this.sink = Objects.requireNonNull(sink, "Sink cannot be null");
+}
+\end{lstlisting}
+The first constructor is composition. The logger creates a formatter and sink for itself, and they become unreachable with it. The second is aggregation. The caller creates those objects and can keep using them after one logger is gone. In \code{Main}, the \code{Input} and \code{Parentheses} loggers use the same formatter and sink.
+
+\begin{lstlisting}
+// In AgentMain, after selecting a Memory tier
+Agent agent = new Agent("Alex", personality, memory, BASE_URL, MODEL);
+
+// Inside the Agent constructor
+this.memory = memory;
+this.client = new LMStudioClient(baseUrl, model);
+this.toolbox = new Toolbox();
+\end{lstlisting}
+The agent creates the client and toolbox, so those are composition. The memory is passed in, so that is aggregation. Two agents sharing one \code{Memory} would see each other's messages and could evict each other's oldest exchanges.
+
+\section{Static vs shared objects}
+Each formatter now holds its own template. The \code{Summary} logger can use the default format while the other two share a template with \code{\%r}. A single setting can no longer change every template. I would keep the level static here because \code{Logger.setLevel()} controls all the lab's logs at once. In a larger program I would consider a level per logger to quiet a noisy class.
+
+\textbf{Bonus.} Each \code{\%} takes one argument. A missing value leaves the \code{\%} in place, extra values are ignored, and \code{\%\%} prints one percent sign. The level check runs first, so hidden messages skip formatting.
+
+\newpage
+\section{Track 2: tool calls and measurements}
+\begin{enumerate}
+    \item The agent sends its system message, the saved conversation, and the new question to LM Studio.
+    \item If Gemma replies with a JSON object containing \code{tool}, \code{Agent} reads the name and input and calls \code{Toolbox.run()}. For \code{12 * 7}, the calculator returns \code{84}.
+    \item The agent adds the tool request as an assistant message and the result as a user message, then asks Gemma again. It runs at most three tools per question.
+    \item The final reply goes to the terminal. \code{Memory} saves the original question and the final reply as one exchange. Temporary tool messages stay with the current question.
+\end{enumerate}
+
+\begin{lstlisting}[language={}]
+{"tool":"calculator","input":"12 * 7"}
+Tool calculator returned: 84
+\end{lstlisting}
+Gemma also called \code{get\_date} and \code{get\_time}. Those Java tools returned \code{2026-11-18} and \code{19:16:17} during the check.
+
+\textbf{Memory test.} The same five prompts went to Gemma 4 E4B Instruct (Q4\_K\_M) in two fresh sessions. The first prompt gave the name Ion, the next three asked for colors, and the fifth asked for the name. Tiers 1, 2, and 3 can hold 2, 5, and 10 complete exchanges. Tokens per second is completion tokens divided by the full HTTP request time.
+
+\begin{center}
+\begin{tabular}{@{}lrrrr@{}}
+\toprule
+\textbf{Memory tier} & \textbf{Turn} & \textbf{Prompt tokens} & \textbf{Completion tokens} & \textbf{Tokens/s}\\
+\midrule
+Tier 1 (2 exchanges)  & 1 & 132 & 198 & 8.85\\
+Tier 1 (2 exchanges)  & 3 & 163 &   2 & 1.35\\
+Tier 1 (2 exchanges)  & 5 & 171 & 107 & 9.03\\
+\addlinespace
+Tier 3 (10 exchanges) & 1 & 132 &  55 & 8.96\\
+Tier 3 (10 exchanges) & 3 & 164 &   3 & 1.86\\
+Tier 3 (10 exchanges) & 5 & 210 &  80 & 8.75\\
+\bottomrule
+\end{tabular}
+\end{center}
+
+On turn five, tier 1 said \textquotedblleft{}Unknown\textquotedblright{} after dropping the first exchange. Tier 3 remembered Ion and used 39 more prompt tokens on that turn. The speed varied across the run. With the same greeting prompt, plain mode said \textquotedblleft{}Hello there!\textquotedblright{} and pirate mode said \textquotedblleft{}Ahoy there!\textquotedblright{}.
+
+\section{Reflection}
+The tool loop in \code{Agent.chat()} took the most checking. A scripted local server made it possible to replay the same wrapped JSON, broken requests, and repeated calls. Those checks showed which replies needed a clear error and when to stop asking the model. A refused connection also returned control to the terminal.
+
+With more time, I would repeat the same transcript a few times per tier and compare the median response times. One run made the memory difference easy to see, but the token rates moved around between turns.

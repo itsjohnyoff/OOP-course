@@ -10,6 +10,13 @@ public class Main {
         Logger validatorLog = new Logger("Parentheses", sharedFormat, console);
         ParenthesesValidator validator = new ParenthesesValidator(validatorLog);
 
+        inputLog.info("Bonus examples");
+        inputLog.info("One value for two spots: % and %", 3);
+        inputLog.info("One spot for two values: %", 3, 7);
+        inputLog.info("Progress: 100%%");
+        // The percent sign is part of the message here.
+        inputLog.info("Ratio is 100%n");
+
         String[] inputs = {"()", ")((()))", "(", "(())((()())())"};
         inputLog.info("Checking % strings", inputs.length);
 

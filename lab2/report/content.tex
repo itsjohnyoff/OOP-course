@@ -57,7 +57,7 @@ The first constructor is composition. The logger creates a formatter and sink fo
 
 \begin{lstlisting}
 // In AgentMain, after selecting a Memory tier
-Agent agent = new Agent("Alex", personality, memory, BASE_URL, MODEL);
+Agent agent = new Agent("Kebab", personality, memory, BASE_URL, MODEL);
 
 // Inside the Agent constructor
 this.memory = memory;
@@ -69,10 +69,12 @@ The agent creates the client and toolbox, so those are composition. The memory i
 \section{Static vs shared objects}
 Each formatter now holds its own template. The \code{Summary} logger can use the default format while the other two share a template with \code{\%r}. A single setting can no longer change every template. I would keep the level static here because \code{Logger.setLevel()} controls all the lab's logs at once. In a larger program I would consider a level per logger to quiet a noisy class.
 
-\textbf{Bonus.} Each \code{\%} takes one argument. A missing value leaves the \code{\%} in place, extra values are ignored, and \code{\%\%} prints one percent sign. The level check runs first, so hidden messages skip formatting.
+\textbf{Bonus.} Each \code{\%} takes one argument. A missing value leaves the \code{\%} in place, extra values are ignored, and \code{\%\%} prints one percent sign. \code{Main} prints these examples and the literal \code{\%n} case above. The level check runs first, so hidden messages skip formatting.
 
 \newpage
 \section{Track 2: tool calls and measurements}
+\textbf{Startup checks.} Before chat, \code{AgentMain} runs the calculator, date, and time tools directly. It also tries division by zero, invalid calculator input, and an unknown tool. \code{Toolbox} logs the three expected errors, and the chat still opens.
+
 \begin{enumerate}
     \item The agent sends its system message, the saved conversation, and the new question to LM Studio.
     \item If Gemma replies with a JSON object containing \code{tool}, \code{Agent} reads the name and input and calls \code{Toolbox.run()}. For \code{12 * 7}, the calculator returns \code{84}.
@@ -84,9 +86,9 @@ Each formatter now holds its own template. The \code{Summary} logger can use the
 {"tool":"calculator","input":"12 * 7"}
 Tool calculator returned: 84
 \end{lstlisting}
-Gemma also called \code{get\_date} and \code{get\_time}. Those Java tools returned \code{2026-11-18} and \code{19:16:17} during the check.
+In live chat, Gemma also called \code{get\_date} and \code{get\_time}.
 
-\textbf{Memory test.} The same five prompts went to Gemma 4 E4B Instruct (Q4\_K\_M) in two fresh sessions. The first prompt gave the name Ion, the next three asked for colors, and the fifth asked for the name. Tiers 1, 2, and 3 can hold 2, 5, and 10 complete exchanges. Tokens per second is completion tokens divided by the full HTTP request time.
+\textbf{Memory test.} The same five prompts went to Gemma 4 E4B Instruct (Q4\_K\_M) in two fresh sessions. The first prompt gave the name Ion, the next three asked for colors, and the fifth asked for the name. Tiers 1, 2, and 3 hold 2, 5, and 10 exchanges. Tier 2 is the default. Tokens per second is completion tokens divided by the full HTTP request time.
 
 \begin{center}
 \begin{tabular}{@{}lrrrr@{}}
@@ -104,9 +106,11 @@ Tier 3 (10 exchanges) & 5 & 210 &  80 & 8.75\\
 \end{tabular}
 \end{center}
 
-On turn five, tier 1 said \textquotedblleft{}Unknown\textquotedblright{} after dropping the first exchange. Tier 3 remembered Ion and used 39 more prompt tokens on that turn. The speed varied across the run. With the same greeting prompt, plain mode said \textquotedblleft{}Hello there!\textquotedblright{} and pirate mode said \textquotedblleft{}Ahoy there!\textquotedblright{}.
+On turn five, tier 1 said \textquotedblleft{}Unknown\textquotedblright{} after dropping the first exchange. Tier 3 remembered Ion and used 39 more prompt tokens. The speed varied across the run.
+
+\textbf{Personality test.} The same greeting got \textquotedblleft{}Hello there!\textquotedblright{} in plain mode (the default) and \textquotedblleft{}Ahoy there!\textquotedblright{} in pirate mode. In a later live check, \code{2 caveman} used the calculator for \code{12 * 7} and replied \textquotedblleft{}Eight four.\textquotedblright{}.
 
 \section{Reflection}
-The tool loop in \code{Agent.chat()} took the most checking. A scripted local server made it possible to replay the same wrapped JSON, broken requests, and repeated calls. Those checks showed which replies needed a clear error and when to stop asking the model. A refused connection also returned control to the terminal.
+The tool loop in \code{Agent.chat()} took the most checking. A scripted local server made it possible to replay wrapped JSON, broken requests, and repeated tool calls. When a connection was refused, \code{AgentMain} logged the failed request and let the user try again.
 
 With more time, I would repeat the same transcript a few times per tier and compare the median response times. One run made the memory difference easy to see, but the token rates moved around between turns.

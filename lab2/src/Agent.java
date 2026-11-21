@@ -29,42 +29,35 @@ public final class Agent {
         this.toolbox = new Toolbox();
     }
 
-    public String chat(String userMessage) {
+    public String chat(String userMessage) throws IOException, InterruptedException {
         Message question = new Message("user", userMessage);
         List<Message> messages = new ArrayList<>();
         messages.add(systemMessage());
         messages.addAll(memory.getMessages());
         messages.add(question);
 
-        try {
-            int calls = 0;
-            while (true) {
-                String reply = ask(messages);
-                ToolCall toolCall = readToolCall(reply);
-                if (toolCall == null) {
-                    remember(question, reply);
-                    return reply;
-                }
-                if (calls == MAX_TOOL_CALLS) {
-                    logger.warn("Tool call limit reached (% per question)", MAX_TOOL_CALLS);
-                    return "I reached the tool call limit. Try asking again.";
-                }
-
-                // Keep tool messages with this question until the model gives a final reply.
-                calls++;
-                messages.add(new Message("assistant", reply));
-                messages.add(new Message("user", runTool(toolCall)));
+        int calls = 0;
+        while (true) {
+            String reply = ask(messages);
+            ToolCall toolCall;
+            try {
+                toolCall = readToolCall(reply);
+            } catch (IllegalArgumentException error) {
+                throw new IOException("Could not read the tool request: " + error.getMessage(), error);
             }
-        } catch (IOException error) {
-            logger.error("%", error.getMessage());
-            return "I couldn't get a reply. See the error above.";
-        } catch (InterruptedException error) {
-            Thread.currentThread().interrupt();
-            logger.error("The LM Studio request was interrupted.");
-            return "The request was interrupted.";
-        } catch (IllegalArgumentException error) {
-            logger.error("Could not read the tool request: %", error.getMessage());
-            return "I couldn't read the tool request. Try asking again.";
+            if (toolCall == null) {
+                remember(question, reply);
+                return reply;
+            }
+            if (calls == MAX_TOOL_CALLS) {
+                logger.warn("Tool call limit reached (% per question)", MAX_TOOL_CALLS);
+                return "I reached the tool call limit. Try asking again.";
+            }
+
+            // Keep tool messages with this question until the model gives a final reply.
+            calls++;
+            messages.add(new Message("assistant", reply));
+            messages.add(new Message("user", runTool(toolCall)));
         }
     }
 
@@ -137,7 +130,6 @@ public final class Agent {
             logger.trace("Tool % returned %", call.name(), result);
             return "Tool " + call.name() + " returned: " + result;
         } catch (IllegalArgumentException | ArithmeticException error) {
-            logger.error("Tool % failed: %", call.name(), error.getMessage());
             return "Tool " + call.name() + " failed: " + error.getMessage();
         }
     }

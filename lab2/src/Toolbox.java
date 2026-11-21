@@ -12,13 +12,20 @@ public final class Toolbox {
     private static final Pattern EXPRESSION = Pattern.compile(
             "\\s*(" + NUMBER + ")\\s*([+*/-])\\s*(" + NUMBER + ")\\s*");
 
+    private final Logger logger = new Logger("Toolbox");
+
     public String run(String toolName, String input) {
-        return switch (toolName) {
-            case "get_time" -> LocalTime.now().format(CLOCK_FORMAT);
-            case "get_date" -> LocalDate.now().toString();
-            case "calculator" -> calculate(input);
-            default -> throw new IllegalArgumentException("Unknown tool: " + toolName);
-        };
+        try {
+            return switch (toolName) {
+                case "get_time" -> LocalTime.now().format(CLOCK_FORMAT);
+                case "get_date" -> LocalDate.now().toString();
+                case "calculator" -> calculate(input);
+                default -> throw new IllegalArgumentException("Unknown tool: " + toolName);
+            };
+        } catch (IllegalArgumentException | ArithmeticException error) {
+            logger.error("Tool % failed: %", toolName, error.getMessage());
+            throw error;
+        }
     }
 
     private String calculate(String input) {
